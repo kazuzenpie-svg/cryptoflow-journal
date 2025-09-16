@@ -49,7 +49,7 @@ export function InvestorDashboard() {
   
   // New state for binding process UI
   const [bindingProcess, setBindingProcess] = useState({
-    step: 'idle' as 'idle' | 'searching' | 'validating' | 'confirmation' | 'binding' | 'success' | 'error',
+    step: 'idle' as 'idle' | 'searching' | 'confirmation' | 'binding' | 'success' | 'error',
     message: '',
     foundTrader: null as AppUser | null,
     error: null as string | null
@@ -277,7 +277,7 @@ export function InvestorDashboard() {
         step: 'error',
         message: '',
         foundTrader: null,
-        error: 'Please enter a trader UUID'
+        error: 'Please enter a trader UID'
       });
       return;
     }
@@ -293,14 +293,14 @@ export function InvestorDashboard() {
     }
 
     setSubmitting(true);
-    const searchUuid = traderUid.trim();
-    console.log('🔍 Starting search for trader UUID:', searchUuid);
+    const searchUuid = traderUid.trim().toUpperCase(); // Trader UIDs are uppercase
+    console.log('🔍 Starting search for trader UID:', searchUuid);
 
     try {
       // STEP 1: Searching with enhanced debugging
       setBindingProcess({
         step: 'searching',
-        message: `Searching for trader with UUID: ${searchUuid.substring(0, 8)}...`,
+        message: `Searching for trader with UID: ${searchUuid}...`,
         foundTrader: null,
         error: null
       });
@@ -326,12 +326,13 @@ export function InvestorDashboard() {
         return;
       }
 
-      // Search for the specific user by UUID
-      console.log('🎯 Searching for user with UUID:', searchUuid);
+      // Search for the specific trader by trader_uid (not id)
+      console.log('🎯 Searching for trader with trader_uid:', searchUuid);
       const { data: anyUser, error: anyUserError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', searchUuid)
+        .eq('trader_uid', searchUuid)  // ✅ CORRECT: Search by trader_uid
+        .eq('role', 'trader')  // ✅ Also ensure they are a trader
         .maybeSingle();
 
       console.log('👤 User search result:', anyUser);
@@ -350,54 +351,31 @@ export function InvestorDashboard() {
       }
 
       if (!anyUser) {
-        // Let's also try searching for traders specifically
-        console.log('🔍 User not found by UUID, checking all traders...');
+        // Let's also try searching for traders by trader_uid specifically
+        console.log('🔍 Trader not found by UID, checking all trader UIDs...');
         const { data: allTraders, error: tradersError } = await supabase
           .from('users')
-          .select('id, username, role, email')
+          .select('id, username, role, email, trader_uid')
           .eq('role', 'trader')
+          .not('trader_uid', 'is', null)
           .limit(10);
         
-        console.log('👥 Available traders:', allTraders);
+        console.log('👥 Available traders with UIDs:', allTraders?.map(t => ({ username: t.username, trader_uid: t.trader_uid })));
         console.log('❌ Traders query error:', tradersError);
 
         setBindingProcess({
           step: 'error',
           message: '',
           foundTrader: null,
-          error: `No user found with UUID: ${searchUuid}. Available traders: ${allTraders?.length || 0}. Please verify the UUID is correct.`
+          error: `No trader found with UID: ${searchUuid}. Please verify the trader UID is correct. Available traders: ${allTraders?.length || 0}.`
         });
         setSubmitting(false);
         return;
       }
 
-      console.log('✅ Found user:', anyUser);
+      console.log('✅ Found trader:', anyUser);
 
-      // STEP 2: Validating role
-      setBindingProcess({
-        step: 'validating',
-        message: `Found user ${anyUser.username}. Validating trader role...`,
-        foundTrader: anyUser as AppUser,
-        error: null
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      if (anyUser.role !== 'trader') {
-        console.log('❌ User is not a trader:', anyUser.role);
-        setBindingProcess({
-          step: 'error',
-          message: '',
-          foundTrader: anyUser as AppUser,
-          error: `${anyUser.username} is an ${anyUser.role}, not a trader. You can only connect to traders.`
-        });
-        setSubmitting(false);
-        return;
-      }
-
-      console.log('✅ Trader validation successful');
-
-      // STEP 3: Show confirmation modal
+      // STEP 2: Show confirmation modal directly (role already validated in query)
       setBindingProcess({
         step: 'confirmation',
         message: `Trader found! Please confirm you want to connect with ${anyUser.username}.`,
@@ -468,12 +446,12 @@ export function InvestorDashboard() {
                 Connect with a Trader
               </CardTitle>
               <CardDescription>
-                Enter the trader's UUID to send a connection request
+                Enter the trader's UID to send a connection request
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="trader-uid">Trader UUID</Label>
+                <Label htmlFor="trader-uid">Trader UID</Label>
                 <Input
                   id="trader-uid"
                   value={traderUid}
@@ -483,11 +461,11 @@ export function InvestorDashboard() {
                       resetBindingProcess();
                     }
                   }}
-                  placeholder="Enter trader UUID (e.g., 123e4567-e89b-12d3-a456-426614174000)"
+                  placeholder="Enter trader UID (e.g., A1B2C3D4)"
                   disabled={submitting}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Ask your trader for their unique UUID (user ID).
+                  Ask your trader for their unique UID (8-character code).
                 </p>
               </div>
               
@@ -505,11 +483,11 @@ export function InvestorDashboard() {
                       </div>
                     )}
                     
-                    {bindingProcess.step === 'validating' && (
+                    {bindingProcess.step === 'confirmation' && (
                       <div className="flex items-center gap-3">
-                        <div className="animate-pulse rounded-full h-4 w-4 bg-yellow-500"></div>
+                        <div className="animate-pulse rounded-full h-4 w-4 bg-green-500"></div>
                         <div>
-                          <p className="text-sm font-medium text-yellow-600">✅ Found Trader!</p>
+                          <p className="text-sm font-medium text-green-600">✅ Trader Found!</p>
                           <p className="text-xs text-muted-foreground">{bindingProcess.message}</p>
                           {bindingProcess.foundTrader && (
                             <div className="flex items-center gap-2 mt-1">
@@ -522,16 +500,6 @@ export function InvestorDashboard() {
                               <Badge variant="outline" className="text-xs">Trader</Badge>
                             </div>
                           )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {bindingProcess.step === 'confirmation' && (
-                      <div className="flex items-center gap-3">
-                        <div className="animate-pulse rounded-full h-4 w-4 bg-blue-500"></div>
-                        <div>
-                          <p className="text-sm font-medium text-blue-600">🎯 Trader Validated!</p>
-                          <p className="text-xs text-muted-foreground">{bindingProcess.message}</p>
                         </div>
                       </div>
                     )}

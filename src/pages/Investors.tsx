@@ -246,32 +246,37 @@ export default function Investors() {
         </Card>
       </div>
 
-      {/* Trader UUID */}
+      {/* Trader UID Display */}
       <Card className="crypto-card-blue">
         <CardHeader>
-          <CardTitle>Your Trader UUID</CardTitle>
+          <CardTitle>Your Trader UID</CardTitle>
           <CardDescription>
-            Share this unique UUID with investors to allow them to connect instantly to your portfolio
+            Share this unique UID with investors to allow them to connect instantly to your portfolio
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
             <code className="flex-1 px-4 py-2 bg-background rounded-lg text-lg font-mono">
-              {profile?.id}
+              {profile?.trader_uid || 'Not available'}
             </code>
             <Button variant="outline" onClick={() => {
-              if (profile?.id) {
-                navigator.clipboard.writeText(profile.id);
+              if (profile?.trader_uid) {
+                navigator.clipboard.writeText(profile.trader_uid);
                 toast({
                   title: "Copied!",
-                  description: "Your Trader UUID has been copied to clipboard.",
+                  description: "Your Trader UID has been copied to clipboard.",
                 });
               }
-            }}>
+            }} disabled={!profile?.trader_uid}>
               <Copy className="w-4 h-4 mr-2" />
               Copy
             </Button>
           </div>
+          {!profile?.trader_uid && (
+            <p className="text-sm text-muted-foreground mt-2">
+              ⚠️ Trader UID not generated. Please contact support.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -289,7 +294,7 @@ export default function Investors() {
               <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="font-medium mb-2">No investors connected yet</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Share your Trader UUID with investors to get started
+                Share your Trader UID with investors to get started
               </p>
             </div>
           ) : (
