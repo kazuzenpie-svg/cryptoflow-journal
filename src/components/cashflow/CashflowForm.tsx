@@ -5,9 +5,6 @@ import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Tables } from '@/integrations/supabase/types';
-
-type CashflowType = 'deposit' | 'withdrawal';
-type Cashflow = Tables<'cashflows'>;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +16,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+type CashflowType = 'deposit' | 'withdrawal';
+type Cashflow = Tables<'cashflows'>;
 
 const cashflowSchema = z.object({
   type: z.enum(['deposit', 'withdrawal']),
