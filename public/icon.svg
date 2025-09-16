@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="80" fill="#1a1a1a"/>
+  <g transform="translate(64, 96)">
+    <!-- Wallet body -->
+    <rect x="0" y="64" width="384" height="256" rx="16" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/>
+    
+    <!-- Wallet fold/flap -->
+    <path d="M32 64 L352 64 L320 32 L64 32 Z" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+    
+    <!-- Wallet handle/closure -->
+    <rect x="300" y="160" width="64" height="64" rx="8" fill="#1e40af" stroke="#1d4ed8" stroke-width="2"/>
+    <circle cx="332" cy="192" r="8" fill="#60a5fa"/>
+    
+    <!-- Currency symbols -->
+    <text x="120" y="200" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#60a5fa">$</text>
+    <text x="180" y="180" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#93c5fd">₿</text>
+    <text x="220" y="220" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#93c5fd">Ξ</text>
+    
+    <!-- Decorative lines -->
+    <line x1="40" y1="240" x2="200" y2="240" stroke="#60a5fa" stroke-width="2"/>
+    <line x1="40" y1="260" x2="160" y2="260" stroke="#60a5fa" stroke-width="2"/>
+  </g>
+</svg>
