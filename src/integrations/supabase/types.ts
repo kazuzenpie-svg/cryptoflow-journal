@@ -207,6 +207,56 @@ export type Database = {
           },
         ]
       }
+      cashflows: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          destination: string | null
+          id: string
+          notes: string | null
+          source: string | null
+          transaction_date: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string
+          destination?: string | null
+          id?: string
+          notes?: string | null
+          source?: string | null
+          transaction_date: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          destination?: string | null
+          id?: string
+          notes?: string | null
+          source?: string | null
+          transaction_date?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashflows_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -224,7 +274,6 @@ export type Database = {
       [_ in never]: never
     }
   }
-}
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 

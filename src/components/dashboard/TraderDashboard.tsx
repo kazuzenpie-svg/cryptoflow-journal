@@ -16,6 +16,7 @@ import {
   Target
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { GrandTotalPortfolio } from './GrandTotalPortfolio';
 
 export function TraderDashboard() {
   const { profile } = useAuth();
@@ -28,6 +29,8 @@ export function TraderDashboard() {
     pendingRequests: 0
   });
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
+  const [allTrades, setAllTrades] = useState<Trade[]>([]);
+  const [cashflows, setCashflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
@@ -37,30 +40,39 @@ export function TraderDashboard() {
       console.log('📊 Fetching dashboard data for trader:', profile.id);
       
       // Parallel requests for better performance
-      const [tradesResult, bindingsResult] = await Promise.all([
+      const [tradesResult, bindingsResult, cashflowsResult] = await Promise.all([
         // Optimized trades query - only essential fields
         supabase
           .from('trades')
           .select('id, category, price, quantity, profit_loss, asset, created_at')
           .eq('user_id', profile.id)
-          .order('created_at', { ascending: false })
-          .limit(20), // Limit for performance
+          .order('created_at', { ascending: false }),
         
         // Optimized bindings query
         supabase
           .from('bindings')
           .select('id, status')
-          .eq('trader_id', profile.id)
+          .eq('trader_id', profile.id),
+          
+        // Fetch cashflows for grand total calculation
+        supabase
+          .from('cashflows')
+          .select('*')
+          .eq('user_id', profile.id)
       ]);
 
       const { data: trades, error: tradesError } = tradesResult;
       const { data: bindings, error: bindingsError } = bindingsResult;
+      const { data: cashflows, error: cashflowsError } = cashflowsResult;
 
       if (tradesError) {
         console.error('❌ Trades fetch error:', tradesError);
       }
       if (bindingsError) {
         console.error('❌ Bindings fetch error:', bindingsError);
+      }
+      if (cashflowsError) {
+        console.error('❌ Cashflows fetch error:', cashflowsError);
       }
 
       if (trades) {
@@ -83,6 +95,8 @@ export function TraderDashboard() {
         });
 
         setRecentTrades(trades.slice(0, 5) as Trade[]);
+        setAllTrades(trades as Trade[]);
+        setCashflows(cashflows || []);
         console.log('✅ Dashboard data loaded successfully');
       }
     } catch (error) {
@@ -152,6 +166,13 @@ export function TraderDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Grand Total Portfolio Overview */}
+      <GrandTotalPortfolio 
+        trades={allTrades} 
+        cashflows={cashflows} 
+        currency={profile?.currency || 'USD'} 
+      />
+
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -291,21 +312,21 @@ export function TraderDashboard() {
         </Card>
       </div>
 
-      {/* Trader UID Display */}
-      {profile?.trader_uid && (
+      {/* Trader UUID Display */}
+      {profile?.id && (
         <Card className="crypto-card-blue">
           <CardHeader>
-            <CardTitle>Your Trader ID</CardTitle>
-            <CardDescription>Share this ID with investors to let them follow your trades</CardDescription>
+            <CardTitle>Your Trader UUID</CardTitle>
+            <CardDescription>Share this UUID with investors to let them connect to your portfolio</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
               <code className="flex-1 px-4 py-2 bg-background rounded-lg text-lg font-mono">
-                {profile.trader_uid}
+                {profile.id}
               </code>
               <Button 
                 variant="outline"
-                onClick={() => navigator.clipboard.writeText(profile.trader_uid || '')}
+                onClick={() => navigator.clipboard.writeText(profile.id || '')}
               >
                 Copy
               </Button>

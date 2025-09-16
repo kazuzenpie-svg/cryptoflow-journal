@@ -79,3 +79,20 @@ export type LiquidityMiningDetails = {
   platform: string;
   rewards_token?: string;
 };
+
+// Cashflow types
+export type CashflowType = 'deposit' | 'withdrawal';
+
+export type Cashflow = {
+  id: string;
+  user_id: string;
+  type: CashflowType;
+  amount: number;
+  currency: 'USD' | 'PHP';
+  source?: string; // e.g., "Bank Transfer", "Credit Card", "Crypto Wallet"
+  destination?: string; // For withdrawals
+  transaction_date: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+};

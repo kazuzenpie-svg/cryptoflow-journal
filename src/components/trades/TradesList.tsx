@@ -34,12 +34,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { RealTimePriceCell } from './RealTimePriceCell';
 
 interface TradesListProps {
   category?: string;
+  sortBy?: string;
+  onTradeCountChange?: (count: number) => void;
 }
 
-export function TradesList({ category }: TradesListProps) {
+export function TradesList({ category, sortBy = 'date_desc', onTradeCountChange }: TradesListProps) {
   const { profile, isTrader } = useAuth();
   const { toast } = useToast();
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -49,16 +52,17 @@ export function TradesList({ category }: TradesListProps) {
 
   useEffect(() => {
     fetchTrades();
-  }, [profile, category]);
+  }, [profile, category, sortBy]);
 
   const fetchTrades = async () => {
     if (!profile) return;
 
     try {
+      setLoading(true);
       let query = supabase
         .from('trades')
         .select('*')
-        .order('trade_date', { ascending: false });
+        .order('trade_date', { ascending: false }); // Most recent first
 
       // For traders, get their own trades
       if (isTrader) {
@@ -90,16 +94,60 @@ export function TradesList({ category }: TradesListProps) {
         }
       }
 
-      if (category) {
+      // Apply category filter if specified
+      if (category && category !== 'all') {
         query = query.eq('category', category);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      setTrades(data as Trade[]);
+      
+      // Additional client-side sorting based on sortBy parameter
+      const sortedTrades = (data as Trade[]).sort((a, b) => {
+        switch (sortBy) {
+          case 'date_asc':
+            return new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime();
+          case 'date_desc':
+            return new Date(b.trade_date).getTime() - new Date(a.trade_date).getTime();
+          case 'asset_asc':
+            return a.asset.localeCompare(b.asset);
+          case 'asset_desc':
+            return b.asset.localeCompare(a.asset);
+          case 'pnl_desc':
+            const aPnL = a.profit_loss || 0;
+            const bPnL = b.profit_loss || 0;
+            return bPnL - aPnL;
+          case 'pnl_asc':
+            const aPnLAsc = a.profit_loss || 0;
+            const bPnLAsc = b.profit_loss || 0;
+            return aPnLAsc - bPnLAsc;
+          case 'category':
+            const categoryOrder = ['spot', 'futures', 'defi', 'dual_investment', 'liquidity_pool', 'liquidity_mining'];
+            const aIndex = categoryOrder.indexOf(a.category);
+            const bIndex = categoryOrder.indexOf(b.category);
+            if (aIndex !== bIndex) return aIndex - bIndex;
+            // Secondary sort by date (newest first) for same category
+            return new Date(b.trade_date).getTime() - new Date(a.trade_date).getTime();
+          default:
+            // Default sort: date desc, then category, then asset
+            const dateComparison = new Date(b.trade_date).getTime() - new Date(a.trade_date).getTime();
+            if (dateComparison !== 0) return dateComparison;
+            
+            const categoryOrderDefault = ['spot', 'futures', 'defi', 'dual_investment', 'liquidity_pool', 'liquidity_mining'];
+            const aIndexDefault = categoryOrderDefault.indexOf(a.category);
+            const bIndexDefault = categoryOrderDefault.indexOf(b.category);
+            if (aIndexDefault !== bIndexDefault) return aIndexDefault - bIndexDefault;
+            
+            return a.asset.localeCompare(b.asset);
+        }
+      });
+      
+      setTrades(sortedTrades);
+      onTradeCountChange?.(sortedTrades.length);
+      console.log(`✅ Loaded ${sortedTrades.length} trades${category && category !== 'all' ? ` for category: ${category}` : ''}`);
     } catch (error) {
-      console.error('Error fetching trades:', error);
+      console.error('❌ Error fetching trades:', error);
       toast({
         title: "Error",
         description: "Failed to fetch trades",
@@ -136,18 +184,20 @@ export function TradesList({ category }: TradesListProps) {
   };
 
   const getCategoryBadge = (category: string) => {
-    const variants: Record<string, string> = {
-      spot: 'default',
-      futures: 'secondary',
-      defi: 'outline',
-      dual_investment: 'destructive',
-      liquidity_pool: 'default',
-      liquidity_mining: 'secondary',
+    const categoryConfig: Record<string, { variant: string; label: string; color?: string }> = {
+      spot: { variant: 'default', label: 'Spot', color: 'bg-blue-500' },
+      futures: { variant: 'secondary', label: 'Futures', color: 'bg-orange-500' },
+      defi: { variant: 'outline', label: 'DeFi', color: 'bg-green-500' },
+      dual_investment: { variant: 'destructive', label: 'Dual Investment', color: 'bg-purple-500' },
+      liquidity_pool: { variant: 'default', label: 'Liquidity Pool', color: 'bg-cyan-500' },
+      liquidity_mining: { variant: 'secondary', label: 'Liquidity Mining', color: 'bg-yellow-500' },
     };
 
+    const config = categoryConfig[category] || { variant: 'outline', label: category.replace('_', ' '), color: 'bg-gray-500' };
+
     return (
-      <Badge variant={variants[category] as any}>
-        {category.replace('_', ' ').toUpperCase()}
+      <Badge variant={config.variant as any} className="whitespace-nowrap">
+        {config.label}
       </Badge>
     );
   };
@@ -205,7 +255,8 @@ export function TradesList({ category }: TradesListProps) {
               <TableRow>
                 <TableHead>Asset</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead>Purchase Price</TableHead>
+                <TableHead>Current Price</TableHead>
                 <TableHead>Quantity</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>P&L</TableHead>
@@ -219,6 +270,15 @@ export function TradesList({ category }: TradesListProps) {
                   <TableCell>{getCategoryBadge(trade.category)}</TableCell>
                   <TableCell>
                     {formatCurrency(trade.price, trade.currency)}
+                  </TableCell>
+                  <TableCell>
+                    <RealTimePriceCell 
+                      asset={trade.asset}
+                      currency={trade.currency as 'USD' | 'PHP'}
+                      purchasePrice={trade.price}
+                      quantity={trade.quantity}
+                      category={trade.category}
+                    />
                   </TableCell>
                   <TableCell>{trade.quantity.toLocaleString()}</TableCell>
                   <TableCell>

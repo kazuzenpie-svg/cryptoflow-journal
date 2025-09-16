@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 // Lazy load components for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Trades = lazy(() => import("./pages/Trades"));
+const Cashflow = lazy(() => import("./pages/Cashflow"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Investors = lazy(() => import("./pages/Investors"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/trades" element={<Trades />} />
                 <Route path="/trades/new" element={<Trades />} />
+                <Route path="/cashflow" element={<Cashflow />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/investors" element={<Investors />} />
                 <Route path="/settings" element={<Settings />} />

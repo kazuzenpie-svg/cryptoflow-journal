@@ -293,14 +293,14 @@ export function InvestorDashboard() {
     }
 
     setSubmitting(true);
-    const searchUuid = traderUid.trim().toUpperCase(); // Trader UIDs are uppercase
-    console.log('🔍 Starting search for trader UID:', searchUuid);
+    const searchUuid = traderUid.trim(); // Trader UUIDs should be kept as-is (case sensitive)
+    console.log('🔍 Starting search for trader UUID:', searchUuid);
 
     try {
       // STEP 1: Searching with enhanced debugging
       setBindingProcess({
         step: 'searching',
-        message: `Searching for trader with UID: ${searchUuid}...`,
+        message: `Searching for trader with UUID: ${searchUuid}...`,
         foundTrader: null,
         error: null
       });
@@ -326,12 +326,12 @@ export function InvestorDashboard() {
         return;
       }
 
-      // Search for the specific trader by trader_uid (not id)
-      console.log('🎯 Searching for trader with trader_uid:', searchUuid);
+      // Search for the specific trader by id (not trader_uid)
+      console.log('🎯 Searching for trader with UUID:', searchUuid);
       const { data: anyUser, error: anyUserError } = await supabase
         .from('users')
         .select('*')
-        .eq('trader_uid', searchUuid)  // ✅ CORRECT: Search by trader_uid
+        .eq('id', searchUuid)  // ✅ CORRECT: Search by user id (UUID)
         .eq('role', 'trader')  // ✅ Also ensure they are a trader
         .maybeSingle();
 
@@ -351,23 +351,26 @@ export function InvestorDashboard() {
       }
 
       if (!anyUser) {
-        // Let's also try searching for traders by trader_uid specifically
-        console.log('🔍 Trader not found by UID, checking all trader UIDs...');
+        // Let's also try searching for traders by id specifically
+        console.log('🔍 Trader not found by UUID, checking all trader UUIDs...');
         const { data: allTraders, error: tradersError } = await supabase
           .from('users')
           .select('id, username, role, email, trader_uid')
           .eq('role', 'trader')
-          .not('trader_uid', 'is', null)
+          .not('id', 'is', null)
           .limit(10);
         
-        console.log('👥 Available traders with UIDs:', allTraders?.map(t => ({ username: t.username, trader_uid: t.trader_uid })));
+        console.log('👥 Available traders with UUIDs:', allTraders?.map(t => ({ username: t.username, id: t.id })));
         console.log('❌ Traders query error:', tradersError);
 
+        // Enhanced error message with debugging info
+        const availableTraders = allTraders?.map(t => `${t.username}: ${t.id}`).join(', ') || 'No traders found';
+        
         setBindingProcess({
           step: 'error',
           message: '',
           foundTrader: null,
-          error: `No trader found with UID: ${searchUuid}. Please verify the trader UID is correct. Available traders: ${allTraders?.length || 0}.`
+          error: `No trader found with UUID: "${searchUuid}". Please verify the trader UUID is correct.\n\nAvailable traders (${allTraders?.length || 0} total): ${availableTraders}`
         });
         setSubmitting(false);
         return;
@@ -446,12 +449,12 @@ export function InvestorDashboard() {
                 Connect with a Trader
               </CardTitle>
               <CardDescription>
-                Enter the trader's UID to send a connection request
+                Enter the trader's UUID to send a connection request
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="trader-uid">Trader UID</Label>
+                <Label htmlFor="trader-uid">Trader UUID</Label>
                 <Input
                   id="trader-uid"
                   value={traderUid}
@@ -461,12 +464,18 @@ export function InvestorDashboard() {
                       resetBindingProcess();
                     }
                   }}
-                  placeholder="Enter trader UID (e.g., A1B2C3D4)"
+                  placeholder="Enter trader UUID (e.g., 123e4567-e89b-12d3-a456-426614174000)"
                   disabled={submitting}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Ask your trader for their unique UID (8-character code).
+                  Ask your trader for their unique UUID (36-character identifier like 123e4567-e89b-12d3-a456-426614174000).
                 </p>
+                <details className="text-xs text-muted-foreground mt-2">
+                  <summary className="cursor-pointer hover:text-foreground">Debug: Show available traders</summary>
+                  <div className="mt-2 p-2 bg-muted rounded text-xs font-mono">
+                    <p>This will show available trader UUIDs when search fails.</p>
+                  </div>
+                </details>
               </div>
               
               {/* Binding Process Status */}
@@ -527,13 +536,19 @@ export function InvestorDashboard() {
                     )}
                     
                     {bindingProcess.step === 'error' && (
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-full h-4 w-4 bg-red-500 flex items-center justify-center">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full h-4 w-4 bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-xs text-white">✕</span>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-red-600">❌ Error</p>
-                          <p className="text-xs text-red-600">{bindingProcess.error}</p>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-red-600">❌ Search Failed</p>
+                          <div className="text-xs space-y-1">
+                            {bindingProcess.error?.split('\n').map((line, i) => (
+                              <p key={i} className={i === 0 ? 'text-red-600' : 'text-muted-foreground font-mono text-xs'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

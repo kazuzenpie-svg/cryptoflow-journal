@@ -75,10 +75,15 @@ Liquidity Pool: Asset (e.g., BTC-ETH), initial investment, quantity, date, fees,
 Liquidity Mining: Asset, initial investment, quantity, date, fees, P&L, platform, rewards token, notes.
 
 
+Cashflow Management:
+
+Deposits: Amount, currency, source (e.g., "Bank Transfer", "Binance"), transaction date, notes.
+Withdrawals: Amount, currency, destination (e.g., "Bank Account", "External Wallet"), transaction date, notes.
+
 
 
 Management: Traders edit/delete entries; audit log in Supabase.
-Portfolio View: Filterable list of trades/investments (by category, asset, date).
+Portfolio View: Filterable list of trades/investments/cashflows (by category, asset, date).
 
 3.3 Analytics and Monitoring
 
@@ -86,25 +91,27 @@ Trader Dashboard:
 
 Metrics:
 
-Total portfolio value (USD or PHP).
+Grand total portfolio value (USD or PHP) - combines trading + investments + net cashflow.
+Total portfolio value breakdown (trading value, investment value, cash balance).
 Profit/loss (P&L, absolute and %; manual for investments, calculated for trades).
 ROI per asset.
-Cash flow summary (inflows/outflows).
+Cash flow summary (total deposits, withdrawals, net cashflow).
 Trade frequency (trades per week/month).
 Average holding period per asset.
 
 
-Visuals: Line chart (portfolio value over time), pie chart (asset allocation), bar chart (trade frequency).
+Visuals: Line chart (portfolio value over time), pie chart (asset allocation), bar chart (trade frequency), cashflow summary cards.
 
 
 Investor Dashboard:
 
-Read-only view of bound Trader’s metrics and visuals.
-No access to other Traders’ data.
+Read-only view of bound Trader's metrics and visuals including cashflow transparency.
+No access to other Traders' data.
+Complete portfolio overview including cash movements.
 
 
 Tech: Recharts for clean, performant charts.
-Notifications: Phantom Wallet-style snackbars (e.g., “Trade Added”, “P&L Updated”).
+Notifications: Phantom Wallet-style snackbars (e.g., "Trade Added", "Deposit Recorded", "P&L Updated").
 
 3.4 Trader-Investor Binding
 
@@ -570,15 +577,16 @@ changes logs field updates, including profit_loss for investments.
 
 
 
-Relationships (Unchanged)
+Relationships (Updated)
 
 Users ↔ Trades: One-to-Many (Trades.user_id → Users.id).
+Users ↔ Cashflows: One-to-Many (Cashflows.user_id → Users.id).
 Users ↔ Bindings: One-to-Many (Bindings.trader_id → Users.id, Bindings.investor_id → Users.id).
 Users (Investor) → Users (Trader): One-to-One (Users.bound_trader_id → Users.id).
 Trades ↔ Audit_Log: One-to-Many (Audit_Log.trade_id → Trades.id).
 
 Row Level Security (RLS) Policies (Updated)
-Updated to handle trades and investments in the Trades table:
+Updated to handle trades, investments, and cashflows:
 
 Users Table: Unchanged.
 
@@ -589,8 +597,15 @@ Trader UID: Investors read trader_uid; Traders read their own.
 Trades Table:
 
 Create/Update/Delete: Traders modify their own entries (auth.uid() = user_id).
-Read: Traders read their own entries (auth.uid() = user_id). Investors read their bound Trader’s entries (auth.uid() = Users.id AND Users.bound_trader_id = Trades.user_id AND Bindings.status = 'approved').
+Read: Traders read their own entries (auth.uid() = user_id). Investors read their bound Trader's entries (auth.uid() = Users.id AND Users.bound_trader_id = Trades.user_id AND Bindings.status = 'approved').
 Ensure profit_loss for investments is only editable by Traders.
+
+
+Cashflows Table: New.
+
+Create/Update/Delete: Traders manage their own cashflows (auth.uid() = user_id).
+Read: Traders read their own cashflows. Investors read their bound Trader's cashflows (similar to Trades table policy).
+Ensures portfolio transparency while maintaining security.
 
 
 Bindings Table: Unchanged.
@@ -607,7 +622,9 @@ Read: Traders only (auth.uid() = user_id).
 
 
 
-Example RLS Policy (Trades Table, Updated)
+Example RLS Policies (Updated)
+
+**Trades Table:**
 sql-- Traders: Read/Write their own trades/investments
 CREATE POLICY trader_access ON Trades
   FOR ALL
@@ -628,6 +645,25 @@ CREATE POLICY investor_access ON Trades
         AND Trades.user_id = u.bound_trader_id
     )
   );
+
+**Cashflows Table:**
+sql-- Traders: Read/Write their own cashflows
+CREATE POLICY "Traders can manage their own cashflows" ON Cashflows
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Investors: Read bound Trader's cashflows
+CREATE POLICY "Investors can view approved trader cashflows" ON Cashflows
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM Bindings b
+      WHERE b.investor_id = auth.uid()
+        AND b.trader_id = Cashflows.user_id
+        AND b.status = 'approved'
+    )
+  );
 Constraints and Validations (Updated)
 
 Users: Unchanged.
@@ -638,6 +674,15 @@ currency: Must be 'USD' or 'PHP'.
 price and quantity: Must be positive.
 profit_loss: Mandatory for investments (category in ['defi', 'dual_investment', 'liquidity_pool', 'liquidity_mining']); optional for trades.
 details (JSONB): Validated in app logic for category-specific fields (e.g., leverage for futures, platform for DeFi).
+
+
+Cashflows:
+
+type: Must be 'deposit' or 'withdrawal'.
+currency: Must be 'USD' or 'PHP'.
+amount: Must be positive (> 0).
+transaction_date: Required.
+source/destination: Optional but recommended for tracking.
 
 
 Bindings:
@@ -651,11 +696,12 @@ Supabase Setup (Updated)
 
 Auth: Email/password, Google OAuth.
 Storage: For avatars (optional).
-Realtime: Enable on Trades and Bindings for real-time updates.
+Realtime: Enable on Trades, Cashflows, and Bindings for real-time updates.
 Triggers:
 
 Generate trader_uid on User creation.
 Log trade/investment actions to Audit_Log (including profit_loss updates).
+Update timestamp triggers for Cashflows table.
 Enforce Investor binding cap (reject if >10 for free-tier Traders).
 
 
@@ -678,6 +724,21 @@ CREATE TABLE Trades (
   notes TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Cashflows Table (New)
+CREATE TABLE Cashflows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('deposit', 'withdrawal')),
+  amount DECIMAL NOT NULL CHECK (amount > 0),
+  currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency IN ('USD', 'PHP')),
+  source TEXT,
+  destination TEXT,
+  transaction_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Trigger for Audit_Log (Updated)
@@ -705,25 +766,36 @@ CREATE TRIGGER audit_trades
   AFTER INSERT OR UPDATE OR DELETE ON Trades
   FOR EACH ROW
   EXECUTE FUNCTION log_trade_changes();
-Addressing Your Idea
+Addressing Your Implementation
 
-Distinct Forms: Using a category column and details JSONB allows tailored forms in the React UI. For example:
+**Distinct Forms**: Using a category column and details JSONB allows tailored forms in the React UI. For example:
 
-Spot: Simple buy/sell form.
-Futures: Adds leverage and margin fields.
-DeFi: Adds platform and APY fields, with manual P&L input.
+- Spot: Simple buy/sell form.
+- Futures: Adds leverage and margin fields.
+- DeFi: Adds platform and APY fields, with manual P&L input.
+
 This keeps the database flexible while supporting unique UIs per category.
 
+**Manual P&L for Investments**: Requiring Traders to input P&L for investments (defi, dual_investment, liquidity_pool, liquidity_mining) is a good approach for MVP, as platforms like Aave or Uniswap have complex P&L calculations (e.g., impermanent loss, staking rewards) that are hard to automate without API integrations.
 
-Manual P&L for Investments: Requiring Traders to input P&L for investments (defi, dual_investment, liquidity_pool, liquidity_mining) is a good approach for MVP, as platforms like Aave or Uniswap have complex P&L calculations (e.g., impermanent loss, staking rewards) that are hard to automate without API integrations. The profit_loss column is optional for trades (auto-calculated if needed) but mandatory for investments (enforced in app logic).
-Benefits:
+**Cashflow Management**: The new Cashflows table enables:
 
-Simplifies MVP by avoiding external data fetching.
-Gives Traders flexibility to input accurate P&L based on their platform data.
-Investors see consistent P&L metrics across all categories.
+- Track deposits and withdrawals for complete portfolio overview
+- Calculate net cash flow for accurate portfolio valuation
+- Support source/destination tracking for transparency
+- Provide investors with full portfolio transparency including cash movements
 
+**Benefits:**
 
-Considerations:
+- Simplifies MVP by avoiding external data fetching
+- Gives Traders flexibility to input accurate P&L based on their platform data
+- Investors see consistent P&L metrics across all categories
+- Complete portfolio overview including cash flow management
+- Real-time updates for all portfolio components
 
-App logic must validate profit_loss for investments (non-null).
-UI should guide Traders to enter P&L for investments (e.g., with a clear input field and snackbar confirmation).
+**Considerations:**
+
+- App logic must validate profit_loss for investments (non-null)
+- UI should guide Traders to enter P&L for investments
+- Cashflow transactions should be validated for positive amounts
+- Source/destination fields help with transaction categorization

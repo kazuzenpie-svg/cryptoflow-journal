@@ -7,7 +7,8 @@ import {
   Settings, 
   Wallet,
   Plus,
-  Eye
+  Eye,
+  DollarSign
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -26,6 +27,7 @@ import { useAuth } from '@/hooks/useAuth';
 const traderNavItems = [
   { title: 'Dashboard', url: '/', icon: Home },
   { title: 'Trade Journal', url: '/trades', icon: TrendingUp },
+  { title: 'Cashflow', url: '/cashflow', icon: DollarSign },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Investors', url: '/investors', icon: Users },
   { title: 'Settings', url: '/settings', icon: Settings },
@@ -34,6 +36,7 @@ const traderNavItems = [
 const investorNavItems = [
   { title: 'Dashboard', url: '/', icon: Home },
   { title: 'Trader Trades', url: '/trades', icon: Eye },
+  { title: 'Cashflow', url: '/cashflow', icon: DollarSign },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
