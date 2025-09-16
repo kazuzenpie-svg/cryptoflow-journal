@@ -28,14 +28,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CashflowForm } from '@/components/cashflow/CashflowForm';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MoreHorizontal, Edit, Trash2, ArrowDownCircle, ArrowUpCircle, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 type Cashflow = Tables<'cashflows'>;
-type CashflowType = 'deposit' | 'withdrawal';
 
 interface CashflowListProps {
   cashflows: Cashflow[];
@@ -45,6 +42,7 @@ interface CashflowListProps {
   currency: 'USD' | 'PHP';
   isTrader: boolean;
   onUpdate: () => void;
+  onEdit?: (cashflow: Cashflow) => void;
 }
 
 export function CashflowList({ 
@@ -54,10 +52,10 @@ export function CashflowList({
   loading, 
   currency,
   isTrader,
-  onUpdate 
+  onUpdate,
+  onEdit
 }: CashflowListProps) {
   const { toast } = useToast();
-  const [editingCashflow, setEditingCashflow] = useState<Cashflow | null>(null);
   const [deletingCashflow, setDeletingCashflow] = useState<Cashflow | null>(null);
 
   // Filter cashflows by type if specified
@@ -212,7 +210,7 @@ export function CashflowList({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => setEditingCashflow(cashflow)}
+                            onClick={() => onEdit && onEdit(cashflow)}
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
@@ -234,27 +232,6 @@ export function CashflowList({
           </Table>
         </CardContent>
       </Card>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingCashflow} onOpenChange={() => setEditingCashflow(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingCashflow?.id ? 'Edit Transaction' : 'Add New Transaction'}
-            </DialogTitle>
-          </DialogHeader>
-          {editingCashflow && (
-            <CashflowForm 
-              type={(editingCashflow.type || 'deposit') as CashflowType}
-              cashflow={editingCashflow.id ? editingCashflow : undefined}
-              onSuccess={() => {
-                setEditingCashflow(null);
-                onUpdate();
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deletingCashflow} onOpenChange={() => setDeletingCashflow(null)}>

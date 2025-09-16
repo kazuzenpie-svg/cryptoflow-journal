@@ -43,6 +43,7 @@ export default function CashflowPage() {
   const [loading, setLoading] = useState(true);
   const [cashflowCount, setCashflowCount] = useState<number>(0);
   const [formType, setFormType] = useState<'deposit' | 'withdrawal'>('deposit');
+  const [editingCashflow, setEditingCashflow] = useState<Cashflow | null>(null);
 
   // Fetch cashflows
   useEffect(() => {
@@ -341,11 +342,33 @@ export default function CashflowPage() {
                 currency={profile?.currency || 'USD'}
                 isTrader={isTrader}
                 onUpdate={handleFormSuccess}
+                onEdit={setEditingCashflow}
               />
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingCashflow} onOpenChange={() => setEditingCashflow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCashflow?.id ? 'Edit Transaction' : 'Add New Transaction'}
+            </DialogTitle>
+          </DialogHeader>
+          {editingCashflow && (
+            <CashflowForm 
+              type={(editingCashflow.type || 'deposit') as 'deposit' | 'withdrawal'}
+              cashflow={editingCashflow.id ? editingCashflow : undefined}
+              onSuccess={() => {
+                setEditingCashflow(null);
+                handleFormSuccess();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
