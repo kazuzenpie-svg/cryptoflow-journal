@@ -113,6 +113,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+# cryptoflow-journal
+>>>>>>> d3352f1758ee0ada24c31d30fb60674a6a6cf538
 <div align="center">
   <p>Built with ❤️ for the crypto trading community</p>
 </div>
+=======
+# cryptoflow-journal
+>>>>>>> d3352f1758ee0ada24c31d30fb60674a6a6cf538
