@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CashflowForm } from './CashflowForm';
+import { CashflowForm } from '@/components/cashflow/CashflowForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MoreHorizontal, Edit, Trash2, ArrowDownCircle, ArrowUpCircle, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
