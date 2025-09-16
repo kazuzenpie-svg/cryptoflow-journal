@@ -1,73 +1,118 @@
-# Welcome to your Lovable project
+# 💼 CryptoFlow Journal
 
-## Project info
+<div align="center">
+  <img src="public/icon.svg" alt="CryptoFlow Journal" width="80" height="80">
+  <h3>Professional Crypto Trading Journal</h3>
+  <p>Real-time data sharing between traders and investors with comprehensive analytics</p>
+</div>
 
-**URL**: https://lovable.dev/projects/60ef7370-ca2c-4924-b286-469ec0b7a62c
+## ✨ Features
 
-## How can I edit this code?
+### 👨‍💼 For Traders
+- **Trade Journaling**: Record and track all your crypto trades
+- **Performance Analytics**: Detailed metrics and performance visualization
+- **Portfolio Management**: Real-time portfolio tracking and allocation analysis
+- **Investor Sharing**: Share trade data with investors in real-time
+- **Profit/Loss Tracking**: Comprehensive P&L analysis with charts
 
-There are several ways of editing your application.
+### 👥 For Investors
+- **Trader Monitoring**: Track your trader's performance in real-time
+- **Investment Analytics**: Monitor your investments and returns
+- **Trade Transparency**: Full visibility into trader's trading activity
+- **Performance Metrics**: Detailed analytics on trader performance
 
-**Use Lovable**
+## 🚀 Technology Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/60ef7370-ca2c-4924-b286-469ec0b7a62c) and start prompting.
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **UI Components**: shadcn/ui + Radix UI
+- **Styling**: Tailwind CSS
+- **Backend**: Supabase (Database + Auth)
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Forms**: React Hook Form + Zod validation
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Quick Start
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account (for backend)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+# Clone the repository
+git clone https://github.com/kazuzenpie-svg/cryptoflow-journal.git
 
-Follow these steps:
+# Navigate to project directory
+cd cryptoflow-journal
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Create a `.env.local` file in the root directory
+2. Add your Supabase configuration:
 
-**Use GitHub Codespaces**
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📱 Progressive Web App
 
-## What technologies are used for this project?
+CryptoFlow Journal is PWA-ready with:
+- Offline functionality
+- App-like experience
+- Custom wallet icon
+- Installable on mobile and desktop
 
-This project is built with:
+## 🗄️ Database Schema
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The application uses Supabase with the following main tables:
+- `profiles` - User profiles (traders/investors)
+- `trades` - Trading records
+- `portfolios` - Portfolio snapshots
+- `trader_investors` - Trader-investor relationships
 
-## How can I deploy this project?
+## 🚀 Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/60ef7370-ca2c-4924-b286-469ec0b7a62c) and click on Share -> Publish.
+### Build for Production
+```bash
+npm run build
+```
 
-## Can I connect a custom domain to my Lovable project?
+### Deploy Options
+- **Vercel**: Connect your GitHub repo for automatic deployments
+- **Netlify**: Drag and drop the `dist` folder
+- **Supabase**: Use Supabase hosting for seamless integration
 
-Yes, you can!
+## 🤝 Contributing
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+**kazuzenpie-svg**
+- GitHub: [@kazuzenpie-svg](https://github.com/kazuzenpie-svg)
+- Email: kazuzenpie@gmail.com
+
+---
+
+<div align="center">
+  <p>Built with ❤️ for the crypto trading community</p>
+</div>
