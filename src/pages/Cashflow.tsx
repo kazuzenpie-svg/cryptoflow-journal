@@ -27,10 +27,10 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, ArrowDownCircle, ArrowUpCircle, Filter, Download, ArrowUpDown, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
-import { CashflowForm } from '@/components/cashflow/CashflowForm';
-import { CashflowList } from '@/components/cashflow/CashflowList';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import { CashflowForm } from '@/components/cashflow/CashflowForm';
+import { CashflowList } from '@/components/cashflow/CashflowList';
 
 type Cashflow = Tables<'cashflows'>;
 
