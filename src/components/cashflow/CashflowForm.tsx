@@ -4,7 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { CashflowType } from '@/types/database';
+import { Tables } from '@/integrations/supabase/types';
+
+type CashflowType = 'deposit' | 'withdrawal';
+type Cashflow = Tables<'cashflows'>;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +32,7 @@ const cashflowSchema = z.object({
 interface CashflowFormProps {
   type: CashflowType;
   onSuccess: () => void;
-  cashflow?: any;
+  cashflow?: Cashflow;
 }
 
 export function CashflowForm({ type, onSuccess, cashflow }: CashflowFormProps) {

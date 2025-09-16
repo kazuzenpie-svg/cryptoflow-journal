@@ -30,7 +30,9 @@ import { Plus, ArrowDownCircle, ArrowUpCircle, Filter, Download, ArrowUpDown, Do
 import { CashflowForm } from '@/components/cashflow/CashflowForm';
 import { CashflowList } from '@/components/cashflow/CashflowList';
 import { supabase } from '@/integrations/supabase/client';
-import { Cashflow } from '@/types/database';
+import { Tables } from '@/integrations/supabase/types';
+
+type Cashflow = Tables<'cashflows'>;
 
 export default function CashflowPage() {
   const { profile, isTrader } = useAuth();
